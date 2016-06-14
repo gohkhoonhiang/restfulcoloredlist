@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Restfulcoloredlist by gohkhoonhiang</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Restfulcoloredlist</h1>
+      <h2 class="project-tagline">This is a RESTful version of the ColoredListApp</h2>
+      <a href="https://github.com/gohkhoonhiang/restfulcoloredlist" class="btn">View on GitHub</a>
+      <a href="https://github.com/gohkhoonhiang/restfulcoloredlist/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/gohkhoonhiang/restfulcoloredlist/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h3>
+<a id="table-of-contents" class="anchor" href="#table-of-contents" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Table of Contents</h3>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li>
+<a href="#redesign">Redesign</a>
+
+<ul>
+<li><a href="#page-flow-redesign">Page Flow Redesign</a></li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h1>
+
+<p>This tutorial is an extension of my previous <a href="https://github.com/gohkhoonhiang/coloredlist">tutorial</a> on learning Tornado framework.</p>
+
+<p>I have wanted to refactor the previous code base to make it more RESTful, but in the process of doing so, I found that it was actually pretty difficult and complicated to refactor the code. The difficulty is mostly due to lack of planning upfront and also because I have picked up some new knowledge along the way which makes the existing structure quite incompatible for a change.</p>
+
+<p>As such, I have decided to start an entirely new repo. This time, I will try to plan more deliberately and keep in mind the practices of REST, so that I can write a more RESTful app this time.</p>
+
+<p>I'm glad I started the previous tutorial, because it lead me to discover more about how most web apps out there write in RESTful style, so that I can apply what I have learnt in this new tutorial. Given that I have just started learning the concepts, I'm sure this tutorial will again be full of incorrect practices. As with the previous tutorial, I will discover such errors along the way, and will surely rewrite and rewrite and rewrite again and again and again.</p>
+
+<p>With that said, you will probably find that I will make references to the previous tutorial. If you are unsure, you can always refer back to the previous tutorial and read the history of it to get a clearer picture of the story.</p>
+
+<p>I hope you will enjoy this tutorial as much as the previous one. Again, feel free to file issues regarding the tutorial or the code itself. Thank you!</p>
+
+<p><a href="#table-of-contents">Back to top</a></p>
+
+<h1>
+<a id="redesign" class="anchor" href="#redesign" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Redesign</h1>
+
+<p>I didn't really talk much about the design process in the previous tutorial, because frankly, there wasn't any. I was just taking literally everything out of the <a href="https://css-tricks.com/app-from-scratch-1-design/">reference</a>, including the template structure and CSS. Because of this, I didn't really put any thought into designing the page flow, user experience and client-server interaction.</p>
+
+<p><a href="#table-of-contents">Back to top</a></p>
+
+<h2>
+<a id="page-flow-redesign" class="anchor" href="#page-flow-redesign" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Page Flow Redesign</h2>
+
+<p>Let's talk about the UI/UX design seriously now. In our Colored List App, there are only a few things that the user will need: a page to login, a page to see all items and perform CRUD actions, a page to change profile, and a page for new user to create an account. That will be a total of 4 pages.</p>
+
+<pre><code>if logged in:                                            if not logged in:
+|------------------------|                               |------------------------|
+|                        |           logout              |                        |&lt;--\
+|  [          ] / -      |         -------------&gt;        |  [username]            |    \
+|  [          ] / -      |                               |  [password]            |     \ error
+|  [          ] / -      |         &lt;-------------        |  [Submit]              |     /
+|                        |              ok               |                        |    /
+|  [          ] +        |                               |  [error message]       |---/
+|                        | &lt;---\                         |                        |
+|------------------------|      \                        |------------------------|
+list.html                        \                       login.html
+     |        / \                 \                            |       / \
+     |         |                   \                           |        |
+     |         |                    \                          |        |
+     | view    | view                \                         | signup | login
+     | account | list                 \ ok                     |        |
+     |         |                       \                       |        |
+     |         |                        \                      |        |
+    \ /        |                         \                    \ /       |
+|------------------------|                \              |------------------------|
+|                        |&lt;--\             \             |                        |&lt;--\
+|  [username]            |    \             \            |  [username]            |    \
+|  [password]            |     \ ok/error    \           |  [password]            |     \ error
+|  [confirmpassword]     |     /              \          |  [confirmpassword]     |     /
+|  [Submit]              |    /                \         |  [Submit]              |    /
+|                        |---/                  \        |                        |---/
+|  [error message]       |                       \       |  [error message]       |
+|                        |                        \------|                        |
+|------------------------|                               |------------------------|
+account.html                                             account_new.html
+</code></pre>
+
+<p><strong>Legends:</strong></p>
+
+<ul>
+<li>
+<code>/</code> in <code>list.html</code> page indicates an <code>edit</code> button.</li>
+<li>
+<code>-</code> in <code>list.html</code> page indicates a <code>delete</code> button.</li>
+<li>
+<code>+</code> in <code>list.html</code> page indicates an <code>add</code> button.</li>
+</ul>
+
+<p>I hope you can understand the diagram drawn with pure ASCII characters above. Basically, it's a page flow diagram showing how the various pages in the app interact.</p>
+
+<ol>
+<li>When the user hits <code>/</code>, if he is logged in, then the <code>list.html</code> is rendered with all the existing items and a <code>Add New Item</code> form displayed. Otherwise, he is redirected to <code>login.html</code> to login with his username and password.</li>
+<li>If the login is unsuccessful, an error message will be displayed. After which, the user may go to the <code>account_new.html</code> to sign up for an account.</li>
+<li>If the login is successful, the user will see the <code>list.html</code> page.</li>
+<li>From <code>list.html</code>, the user can go to <code>account.html</code> to view his profile and make changes to his passwords.</li>
+<li>If the password update is successful, he will remain on the same page with no error message. Otherwise, an error message will be displayed below the form.</li>
+<li>From the <code>account.html</code> page, the user can navigate back to the <code>list.html</code>.</li>
+<li>If a new user signs up for an account successfully, he is immediately redirected to the <code>list.html</code> with an empty list where he can start adding new items. Otherwise, he will remain on the <code>account_new.html</code> with an error message displayed.</li>
+<li>From the <code>account_new.html</code> page, the user may suddenly remember his login credentials and can navigate back to <code>login.html</code> page to perform login.</li>
+</ol>
+
+<p><a href="#table-of-contents">Back to top</a></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/gohkhoonhiang/restfulcoloredlist">Restfulcoloredlist</a> is maintained by <a href="https://github.com/gohkhoonhiang">gohkhoonhiang</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
