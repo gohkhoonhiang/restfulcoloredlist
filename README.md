@@ -3,6 +3,10 @@
 * [Introduction](#introduction)
 * [Redesign](#redesign)
   * [Page Flow Redesign](#page-flow-redesign)
+* [RESTful Services](#restful-services)
+  * [Rewriting URI Endpoints](#rewriting-uri-endpoints)
+  * [Rewriting Request Handlers](#rewriting-request-handlers)
+  * [Separating UI and APIs](#separating-ui-and-apis)
 
 # Introduction
 
@@ -80,4 +84,125 @@ I hope you can understand the diagram drawn with pure ASCII characters above. Ba
 8. From the `account_new.html` page, the user may suddenly remember his login credentials and can navigate back to `login.html` page to perform login.
 
 [Back to top](#table-of-contents)
+
+# RESTful Services
+
+Notice that in the previous tutorial, I have used the term `REST` in sections that concern getting a JSON response from the server. Upon reading more about what RESTfulness actually is, it's obvious that the app we have built so far does not comply with REST guidelines. There are few things we did that have violated the rules:
+
+### No Verbs in Resource URI
+
+Having a URI like `/list/create` is a no-no. The URI should describe what resource will be involved, and the action for each resource should be defined in each HTTP verb such as `GET`, `POST`, `PUT` and `DELETE`. A good design of a URI for our case will be `/items/{id}`, where `id` is the identifier of the single resource in the collection, and each HTTP verb will corresponding to getting a list of items, creating a new item in the list, updating an item and deleting and item. 
+
+### Use Plural Nouns
+
+Instead of using singular noun, it is better and simpler to use a standardized plural form for all resources name. For our list page, the actual resources requested are the list items, instead of the lists, so instead of using `/list`, it is clearer to use `/items`. And don't use collection nouns like `/itemList` or `/itemSet`.
+
+### Separate URIs for Views
+
+Since everything returned by the server is a resource, an HTML template that is returned is also considered a resource, so we should have a proper URI structure for that as well. Instead of the current `/list`, which should be reserved for returning list data, we will use `/p/list` instead, where `p` is shorthand for `pages`.
+
+[Back to top](#table-of-contents)
+
+## Rewriting URI Endpoints
+
+Now that we are clear of RESTful API style, we should redesign our own APIs to make them more RESTful.
+
+Let's start with listing down all available resources from our server.
+
+1. Pages
+2. List Items
+3. User Profile (although we have yet to implement the User Account page, we are expected to have the user data as one available resource)
+
+Now, we will define just one URI for each resource, because every operation on the resource should be defined by the HTTP verb.
+
+### Pages
+
+```
+/p/{page_name}
+```
+
+For example:
+
+```
+/p/account`
+```
+
+### List Items
+
+```
+/items/{item_id}
+```
+
+For example:
+
+```
+/items/5745b7feaeca1313f23acb44
+```
+
+### User Profile
+
+```
+/accounts/{user_id}
+```
+
+For example:
+
+```
+/accounts/572cbfceaeca133de672b178
+```
+
+Even though there are mainly 4 HTTP verbs that the client can use for each type of resource, we may not necessarily have to grant them all the actions. For example, we will not allow users to "deregister" themselves directly from the client-side, so we should block the `DELETE` request on `/users/{user_id}`. To do so, we just simply do not override the `delete()` method in our request handler.
+
+### URLs Redesigned
+
+Let's rewrite our `urls.py` to define the necessary resource URIs.
+
+```
+url_patterns = [
+    url(r"/", MainHandler, dict(db=db)),
+    url(r"/items/([0-9a-zA-Z\-]+)", ListItemHandler, dict(db=db)),
+    url(r"/items", ListItemListHandler, dict(db=db)),
+    url(r"/p/items", ListItemPageHandler, dict(db=db)),
+    url(r"/login", LoginHandler, dict(db=db)),
+    url(r"/p/login", LoginPageHandler, dict(db=db)),
+    url(r"/logout", LogoutHandler, dict(db=db)),
+    url(r"/accounts/([0-9a-zA-Z\-]+)", AccountHandler, dict(db=db)),
+    url(r"/accounts", AccountListHandler, dict(db=db)),
+    url(r"/p/account/create", AccountCreatePageHandler, dict(db=db)),
+    url(r"/p/account/view", AccountViewPageHandler, dict(db=db)),
+]
+```
+
+Let's discuss the design of the URLs we have just defined.
+
+For each type of resources, we have 2 versions of the URIs: one with a regex suffix, another without. For example, we have `/items/([0-9a-zA-Z]+)` and `/items`. The first URI is used for a single resource request, and the latter is used for collection resource request. When the client requires a single item, it will call `/items/{item_id}` with `GET` method, then the endpoint should respond with a single `item` data. On the other hand, when the client requires a list of items, it will call `/items` with `GET` method, and the endpoint will respond with a list of `item`s data. Additionally, if the client wants to create a new resource in the `item` collection, it will call `/items` with `POST` method, together with the new `item` data as request body. This is in line with the RESTful design guideline.
+
+Besides the resource URIs, we also need to define the page URIs. To display the list of `item`s, we provide the `/p/items` URI for the client to request, then the endpoint will render the `items.html` template accordingly.
+
+[Back to top](#table-of-contents)
+
+## Rewriting Request Handlers
+
+When we redesigned the URL patterns, we also introduced a few new request handlers. Here is the complete list of handlers in the new design:
+
+* MainHandler (GET)
+* ListItemHandler (GET, PUT, DELETE)
+* ListItemListHandler (GET, POST)
+* ListItemPageHandler (GET)
+* LoginHandler (POST)
+* LoginPageHandler (GET)
+* LogoutHandler (POST)
+* AccountHandler (GET, PUT, DELETE)
+* AccountListHandler (GET, POST)
+* AccountCreatePageHandler (GET)
+* AccountViewPageHandler (GET)
+
+For each of the request handlers, we have indicated the methods that we will implement. The client may only make a request via these methods to each of the URI, accordingly.
+
+[Back to top](#table-of-contents)
+
+## Separating UI and APIs
+
+[Back to top](#table-of-contents)
+
 
